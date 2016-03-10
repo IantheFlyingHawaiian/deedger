@@ -3,12 +3,17 @@ package gameworld;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 
-import gameobjects.Deeg;
 import dghelpers.AssetLoader;
+import gameobjects.Deeg;
+import gameobjects.Grass;
+import gameobjects.Pipe;
+import gameobjects.ScrollHandler;
 
 
 /**
@@ -20,20 +25,26 @@ public class GameRenderer {
     private OrthographicCamera cam;
     private ShapeRenderer shapeRenderer;
 
-    //Sprite Batch draws images for us using hte indices provided.
-    // (x,y, width and height,)
     private SpriteBatch batcher;
 
-    //change our camera width to 136, and hieght to game height
     private int midPointY;
     private int gameHeight;
+
+    // Game Objects
+    private Deeg deeg;
+    private ScrollHandler scroller;
+    private Grass frontGrass, backGrass;
+    private Pipe pipe1, pipe2, pipe3;
+
+    // Game Assets
+    private TextureRegion bg, grass;
+    private Animation deegAnimation;
+    private TextureRegion deegMid, deegDown, deegUp;
+    private TextureRegion skullUp, skullDown, bar;
 
     public GameRenderer(GameWorld world, int gameHeight, int midPointY) {
         myWorld = world;
 
-        //The word "this" refers to this instance
-        //We are setting the instance variables' values to be that of the
-        // parameters passed in from GameScreen.
         this.gameHeight = gameHeight;
         this.midPointY = midPointY;
 
@@ -41,24 +52,89 @@ public class GameRenderer {
         cam.setToOrtho(true, 136, gameHeight);
 
         batcher = new SpriteBatch();
-        //Attach batcher to camera
         batcher.setProjectionMatrix(cam.combined);
-
         shapeRenderer = new ShapeRenderer();
         shapeRenderer.setProjectionMatrix(cam.combined);
+
+        // Call helper methods to initialize instance variables
+        initGameObjects();
+        initAssets();
+    }
+
+    private void initGameObjects() {
+        deeg = myWorld.getDeeg();
+        scroller = myWorld.getScroller();
+        frontGrass = scroller.getFrontGrass();
+        backGrass = scroller.getBackGrass();
+        pipe1 = scroller.getPipe1();
+        pipe2 = scroller.getPipe2();
+        pipe3 = scroller.getPipe3();
+    }
+
+    private void initAssets() {
+        bg = AssetLoader.bg;
+        grass = AssetLoader.grass;
+        deegAnimation = AssetLoader.deegAnimation;
+        deegMid = AssetLoader.deeg;
+        deegDown = AssetLoader.deegDown;
+        deegUp = AssetLoader.deegUp;
+        skullUp = AssetLoader.skullUp;
+        skullDown = AssetLoader.skullDown;
+        bar = AssetLoader.bar;
+    }
+
+    private void drawGrass() {
+        // Draw the grass
+        batcher.draw(grass, frontGrass.getX(), frontGrass.getY(),
+                frontGrass.getWidth(), frontGrass.getHeight());
+        batcher.draw(grass, backGrass.getX(), backGrass.getY(),
+                backGrass.getWidth(), backGrass.getHeight());
+    }
+
+    private void drawSkulls() {
+        // Temporary code! Sorry about the mess :)
+        // We will fix this when we finish the Pipe class.
+
+        batcher.draw(skullUp, pipe1.getX() - 1,
+                pipe1.getY() + pipe1.getHeight() - 14, 24, 14);
+        batcher.draw(skullDown, pipe1.getX() - 1,
+                pipe1.getY() + pipe1.getHeight() + 45, 24, 14);
+
+        batcher.draw(skullUp, pipe2.getX() - 1,
+                pipe2.getY() + pipe2.getHeight() - 14, 24, 14);
+        batcher.draw(skullDown, pipe2.getX() - 1,
+                pipe2.getY() + pipe2.getHeight() + 45, 24, 14);
+
+        batcher.draw(skullUp, pipe3.getX() - 1,
+                pipe3.getY() + pipe3.getHeight() - 14, 24, 14);
+        batcher.draw(skullDown, pipe3.getX() - 1,
+                pipe3.getY() + pipe3.getHeight() + 45, 24, 14);
+    }
+
+    private void drawPipes() {
+        // Temporary code! Sorry about the mess :)
+        // We will fix this when we finish the Pipe class.
+        batcher.draw(bar, pipe1.getX(), pipe1.getY(), pipe1.getWidth(),
+                pipe1.getHeight());
+        batcher.draw(bar, pipe1.getX(), pipe1.getY() + pipe1.getHeight() + 45,
+                pipe1.getWidth(), midPointY + 66 - (pipe1.getHeight() + 45));
+
+        batcher.draw(bar, pipe2.getX(), pipe2.getY(), pipe2.getWidth(),
+                pipe2.getHeight());
+        batcher.draw(bar, pipe2.getX(), pipe2.getY() + pipe2.getHeight() + 45,
+                pipe2.getWidth(), midPointY + 66 - (pipe2.getHeight() + 45));
+
+        batcher.draw(bar, pipe3.getX(), pipe3.getY(), pipe3.getWidth(),
+                pipe3.getHeight());
+        batcher.draw(bar, pipe3.getX(), pipe3.getY() + pipe3.getHeight() + 45,
+                pipe3.getWidth(), midPointY + 66 - (pipe3.getHeight() + 45));
     }
 
     public void render(float runTime) {
-        Gdx.app.log("GameRenderer", "render");
 
-        // We will move these outside of the loop for performance later.
-        Deeg deeg = myWorld.getDeeg();
-
-        // Fill the entire screen with black, to prevent potential flickering.
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Begin ShapeRenderer
         shapeRenderer.begin(ShapeType.Filled);
 
         // Draw Background color
@@ -73,67 +149,79 @@ public class GameRenderer {
         shapeRenderer.setColor(147 / 255.0f, 80 / 255.0f, 27 / 255.0f, 1);
         shapeRenderer.rect(0, midPointY + 77, 136, 52);
 
-        // End ShapeRenderer
         shapeRenderer.end();
 
-        // Begin SpriteBatch
         batcher.begin();
-        // Disable transparency
-        // This is good for performance when drawing images that do not require
-        // transparency.
         batcher.disableBlending();
-        batcher.draw(AssetLoader.bg, 0, midPointY + 23, 136, 43);
+        batcher.draw(bg, 0, midPointY + 23, 136, 43);
 
-        // The bird needs transparency, so we enable that again.
+        // 1. Draw Grass
+        drawGrass();
+
+        // 2. Draw Pipes
+        drawPipes();
         batcher.enableBlending();
 
-        // Draw bird at its coordinates. Retrieve the Animation object from
-        // AssetLoader
-        // Pass in the runTime variable to get the current frame.
-        batcher.draw(AssetLoader.deegAnimation.getKeyFrame(runTime),
-                deeg.getX(), deeg.getY(), deeg.getWidth(), deeg.getHeight());
+        // 3. Draw Skulls (requires transparency)
+        drawSkulls();
 
-        // End SpriteBatch
+        if (deeg.shouldntFlap()) {
+            batcher.draw(deegMid, deeg.getX(), deeg.getY(),
+                    deeg.getWidth() / 2.0f, deeg.getHeight() / 2.0f,
+                    deeg.getWidth(), deeg.getHeight(), 1, 1, deeg.getRotation());
+
+        } else {
+            batcher.draw(deegAnimation.getKeyFrame(runTime), deeg.getX(),
+                    deeg.getY(), deeg.getWidth() / 2.0f,
+                    deeg.getHeight() / 2.0f, deeg.getWidth(), deeg.getHeight(),
+                    1, 1, deeg.getRotation());
+        }
+
         batcher.end();
-        /*
-         * 1. We draw a black background. This prevents flickering.
-         *//*
 
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        /*shapeRenderer.begin(ShapeType.Filled);
+        shapeRenderer.setColor(Color.RED);
+        shapeRenderer.circle(deeg.getBoundingCircle().x, deeg.getBoundingCircle().y, deeg.getBoundingCircle().radius);
 
-        *//*
-         * 2. We draw the Filled rectangle
-         *//*
-
-        // Tells shapeRenderer to begin drawing filled shapes
-        shapeRenderer.begin(ShapeType.Filled);
-
-        // Chooses RGB Color of 87, 109, 120 at full opacity
-        shapeRenderer.setColor(87 / 255.0f, 109 / 255.0f, 120 / 255.0f, 1);
-
-        // Draws the rectangle from myWorld (Using ShapeType.Filled)
-        shapeRenderer.rect(myWorld.getRect().x, myWorld.getRect().y,
-                myWorld.getRect().width, myWorld.getRect().height);
-
-        // Tells the shapeRenderer to finish rendering
-        // We MUST do this every time.
-        shapeRenderer.end();
 
         *//*
-         * 3. We draw the rectangle's outline
+         * Excuse the mess below. Temporary code for testing bounding
+         * rectangles.
          *//*
+        // Bar up for pipes 1 2 and 3
+        shapeRenderer.rect(pipe1.getBarUp().x, pipe1.getBarUp().y,
+                pipe1.getBarUp().width, pipe1.getBarUp().height);
+        shapeRenderer.rect(pipe2.getBarUp().x, pipe2.getBarUp().y,
+                pipe2.getBarUp().width, pipe2.getBarUp().height);
+        shapeRenderer.rect(pipe3.getBarUp().x, pipe3.getBarUp().y,
+                pipe3.getBarUp().width, pipe3.getBarUp().height);
 
-        // Tells shapeRenderer to draw an outline of the following shapes
-        shapeRenderer.begin(ShapeType.Line);
+        // Bar down for pipes 1 2 and 3
+        shapeRenderer.rect(pipe1.getBarDown().x, pipe1.getBarDown().y,
+                pipe1.getBarDown().width, pipe1.getBarDown().height);
+        shapeRenderer.rect(pipe2.getBarDown().x, pipe2.getBarDown().y,
+                pipe2.getBarDown().width, pipe2.getBarDown().height);
+        shapeRenderer.rect(pipe3.getBarDown().x, pipe3.getBarDown().y,
+                pipe3.getBarDown().width, pipe3.getBarDown().height);
 
-        // Chooses RGB Color of 255, 109, 120 at full opacity
-        shapeRenderer.setColor(255 / 255.0f, 109 / 255.0f, 120 / 255.0f, 1);
+        // Skull up for Pipes 1 2 and 3
+        shapeRenderer.rect(pipe1.getSkullUp().x, pipe1.getSkullUp().y,
+                pipe1.getSkullUp().width, pipe1.getSkullUp().height);
+        shapeRenderer.rect(pipe2.getSkullUp().x, pipe2.getSkullUp().y,
+                pipe2.getSkullUp().width, pipe2.getSkullUp().height);
+        shapeRenderer.rect(pipe3.getSkullUp().x, pipe3.getSkullUp().y,
+                pipe3.getSkullUp().width, pipe3.getSkullUp().height);
 
-        // Draws the rectangle from myWorld (Using ShapeType.Line)
-        shapeRenderer.rect(myWorld.getRect().x, myWorld.getRect().y,
-                myWorld.getRect().width, myWorld.getRect().height);
+        // Skull down for Pipes 1 2 and 3
+        shapeRenderer.rect(pipe1.getSkullDown().x, pipe1.getSkullDown().y,
+                pipe1.getSkullDown().width, pipe1.getSkullDown().height);
+        shapeRenderer.rect(pipe2.getSkullDown().x, pipe2.getSkullDown().y,
+                pipe2.getSkullDown().width, pipe2.getSkullDown().height);
+        shapeRenderer.rect(pipe3.getSkullDown().x, pipe3.getSkullDown().y,
+                pipe3.getSkullDown().width, pipe3.getSkullDown().height);
 
         shapeRenderer.end();*/
+
     }
+
 }
