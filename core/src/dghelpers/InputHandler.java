@@ -3,18 +3,34 @@ package dghelpers;
 import com.badlogic.gdx.InputProcessor;
 
 import gameobjects.Deeg;
+import gameworld.GameWorld;
+
 
 public class InputHandler implements InputProcessor {
-
     private Deeg myDeeg;
+    private GameWorld myWorld;
 
-    public InputHandler(Deeg deeg){
-        myDeeg = deeg;
+    // Ask for a reference to the Bird when InputHandler is created.
+    public InputHandler(GameWorld myWorld) {
+        // myBird now represents the gameWorld's bird.
+        this.myWorld = myWorld;
+        myDeeg = myWorld.getDeeg();
     }
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+
+        if (myWorld.isReady()) {
+            myWorld.start();
+        }
+
         myDeeg.onClick();
+
+        if (myWorld.isGameOver() || myWorld.isHighScore()) {
+            // Reset all variables, go to GameState.READ
+            myWorld.restart();
+        }
+
         return true;
     }
 
@@ -52,5 +68,4 @@ public class InputHandler implements InputProcessor {
     public boolean scrolled(int amount) {
         return false;
     }
-
 }

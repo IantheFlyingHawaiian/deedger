@@ -39,11 +39,17 @@ public class Deeg {
             velocity.y = 200;
         }
 
+        //CEILING CHECK
+        if (position.y < -13) {
+            position.y=-13;
+            velocity.y = 0;
+        }
+
         position.add(velocity.cpy().scl(delta));
 
         // Set the circle's center to be (9, 6) with respect to the deeg.
         // Set the circle's radius to be 6.5f;
-        boundingCircle.set(position.x+9,position.y+6, 6.5f);
+        boundingCircle.set(position.x + 9, position.y + 6, 6.5f);
 
         // Rotate counterclockwise
         if (velocity.y < 0) {
@@ -88,6 +94,16 @@ public class Deeg {
     public void decelerate() {
         // We want the bird to stop accelerating downards once it is dead
         acceleration.y = 0;
+    }
+
+    public void onRestart(int y) {
+        rotation = 0;
+        position.y = y;
+        velocity.x = 0;
+        velocity.y = 0;
+        acceleration.x = 0;
+        acceleration.y = 460;
+        isAlive = true;
     }
 
     public float getX() {

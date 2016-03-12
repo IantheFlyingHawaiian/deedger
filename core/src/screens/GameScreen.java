@@ -26,7 +26,7 @@ public class GameScreen implements Screen {
         world = new GameWorld(midPointY);
         renderer = new GameRenderer(world, (int) gameHeight, midPointY);
 
-        Gdx.input.setInputProcessor(new InputHandler(world.getDeeg()));
+        Gdx.input.setInputProcessor(new InputHandler(world));
 
     }
 
@@ -39,27 +39,27 @@ public class GameScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-
+        System.out.println("GameScreen - resizing");
     }
 
     @Override
     public void show() {
-        Gdx.app.log("GameScreen", "show called");
+        System.out.println("GameScreen - show called");
     }
 
     @Override
     public void hide() {
-        Gdx.app.log("GameScreen", "hide called");
+        System.out.println("GameScreen - hide called");
     }
 
     @Override
     public void pause() {
-        Gdx.app.log("GameScreen", "pause called");
+        System.out.println("GameScreen - pause called");
     }
 
     @Override
     public void resume() {
-        Gdx.app.log("GameScreen", "resume called");
+        System.out.println("GameScreen - resume called");
     }
 
     @Override
