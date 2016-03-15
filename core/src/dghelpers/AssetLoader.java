@@ -19,24 +19,31 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class AssetLoader {
 
-    public static Texture texture;
-    public static TextureRegion bg, grass;
-
+    public static Texture texture, logoTexture;
+    public static TextureRegion logo, dgLogo, bg, grass, deeg, deegDown,
+            deegUp, skullUp, skullDown, bar, playButtonUp, playButtonDown;
     public static Animation deegAnimation;
-    public static TextureRegion deeg, deegDown, deegUp;
-
-    public static TextureRegion skullUp, skullDown, bar;
-
     public static Sound dead, flap, coin;
-
     public static BitmapFont font, shadow;
-
     private static Preferences prefs;
 
     public static void load() {
 
+        logoTexture = new Texture(Gdx.files.internal("logo.png"));
+        logoTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+
+        logo = new TextureRegion(logoTexture, 0, 0, 512, 114);
+
         texture = new Texture(Gdx.files.internal("texture.png"));
         texture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+
+        playButtonUp = new TextureRegion(texture, 0, 83, 29, 16);
+        playButtonDown = new TextureRegion(texture, 29, 83, 29, 16);
+        playButtonUp.flip(false, true);
+        playButtonDown.flip(false, true);
+
+        dgLogo = new TextureRegion(texture, 0, 55, 135, 24);
+        dgLogo.flip(false, true);
 
         bg = new TextureRegion(texture, 0, 0, 136, 43);
         bg.flip(false, true);
