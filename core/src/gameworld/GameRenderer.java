@@ -1,6 +1,7 @@
 package gameworld;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Animation;
@@ -24,9 +25,6 @@ import gameobjects.Pipe;
 import gameobjects.ScrollHandler;
 import ui.SimpleButton;
 
-/**
- * Created by Ian on 3/7/2016.
- */
 public class GameRenderer {
 
     private GameWorld myWorld;
@@ -44,16 +42,17 @@ public class GameRenderer {
     private Pipe pipe1, pipe2, pipe3;
 
     // Game Assets
-    private TextureRegion bg, grass, deegMid, skullUp, skullDown, bar;
+    private TextureRegion bg, grass, deegMid, skullUp, skullDown, bar, ready,
+            zbLogo, gameOver, highScore, scoreboard, star, noStar, retry;
     private Animation deegAnimation;
 
-    //Tween stuff
+    // Tween stuff
     private TweenManager manager;
     private Value alpha = new Value();
 
-    //Buttons
+    // Buttons
     private List<SimpleButton> menuButtons;
-
+    private Color transitionColor;
 
     public GameRenderer(GameWorld world, int gameHeight, int midPointY) {
         myWorld = world;
@@ -70,17 +69,11 @@ public class GameRenderer {
         shapeRenderer = new ShapeRenderer();
         shapeRenderer.setProjectionMatrix(cam.combined);
 
-        // Call helper methods to initialize instance variables
         initGameObjects();
         initAssets();
-        setupTweens();
-    }
 
-    private void setupTweens() {
-        Tween.registerAccessor(Value.class, new ValueAccessor());
-        manager = new TweenManager();
-        Tween.to(alpha, -1, .5f).target(0).ease(TweenEquations.easeOutQuad)
-                .start(manager);
+        transitionColor = new Color();
+        prepareTransition(255, 255, 255, .5f);
     }
 
     private void initGameObjects() {
@@ -101,6 +94,14 @@ public class GameRenderer {
         skullUp = AssetLoader.skullUp;
         skullDown = AssetLoader.skullDown;
         bar = AssetLoader.bar;
+        ready = AssetLoader.ready;
+        zbLogo = AssetLoader.dgLogo;
+        gameOver = AssetLoader.gameOver;
+        highScore = AssetLoader.highScore;
+        scoreboard = AssetLoader.scoreboard;
+        retry = AssetLoader.retry;
+        star = AssetLoader.star;
+        noStar = AssetLoader.noStar;
     }
 
     private void drawGrass() {
@@ -112,8 +113,6 @@ public class GameRenderer {
     }
 
     private void drawSkulls() {
-        // Temporary code! Sorry about the mess :)
-        // We will fix this when we finish the Pipe class.
 
         batcher.draw(skullUp, pipe1.getX() - 1,
                 pipe1.getY() + pipe1.getHeight() - 14, 24, 14);
@@ -132,7 +131,6 @@ public class GameRenderer {
     }
 
     private void drawPipes() {
-
         batcher.draw(bar, pipe1.getX(), pipe1.getY(), pipe1.getWidth(),
                 pipe1.getHeight());
         batcher.draw(bar, pipe1.getX(), pipe1.getY() + pipe1.getHeight() + 45,
@@ -149,15 +147,15 @@ public class GameRenderer {
                 pipe3.getWidth(), midPointY + 66 - (pipe3.getHeight() + 45));
     }
 
-    private void drawBirdCentered(float runTime) {
-        batcher.draw(deegAnimation.getKeyFrame(runTime), 59, deeg.getY()-15,
+    private void drawDeegCentered(float runTime) {
+        batcher.draw(deegAnimation.getKeyFrame(runTime), 59, deeg.getY() - 15,
                 deeg.getWidth() / 2.0f, deeg.getHeight() / 2.0f,
                 deeg.getWidth(), deeg.getHeight(), 1, 1, deeg.getRotation());
     }
 
     private void drawDeeg(float runTime) {
 
-        if(deeg.shouldntFlap()) {
+        if (deeg.shouldntFlap()) {
             batcher.draw(deegMid, deeg.getX(), deeg.getY(),
                     deeg.getWidth() / 2.0f, deeg.getHeight() / 2.0f,
                     deeg.getWidth(), deeg.getHeight(), 1, 1, deeg.getRotation());
@@ -165,27 +163,84 @@ public class GameRenderer {
         } else {
             batcher.draw(deegAnimation.getKeyFrame(runTime), deeg.getX(),
                     deeg.getY(), deeg.getWidth() / 2.0f,
-                    deeg.getHeight() / 2.0f, deeg.getWidth(),
-                    deeg.getHeight(), 1, 1, deeg.getRotation());
+                    deeg.getHeight() / 2.0f, deeg.getWidth(), deeg.getHeight(),
+                    1, 1, deeg.getRotation());
         }
+
     }
 
     private void drawMenuUI() {
-        batcher.draw(AssetLoader.dgLogo, 136/2 - 56, midPointY - 50,
-                AssetLoader.dgLogo.getRegionWidth() / 1.2f,
-                AssetLoader.dgLogo.getRegionHeight() / 1.2f);
+        batcher.draw(zbLogo, 136 / 2 - 56, midPointY - 50,
+                zbLogo.getRegionWidth() / 1.2f, zbLogo.getRegionHeight() / 1.2f);
 
-        for (SimpleButton button: menuButtons) {
+        for (SimpleButton button : menuButtons) {
             button.draw(batcher);
         }
+
+    }
+
+    private void drawScoreboard() {
+        batcher.draw(scoreboard, 22, midPointY - 30, 97, 37);
+
+        batcher.draw(noStar, 25, midPointY - 15, 10, 10);
+        batcher.draw(noStar, 37, midPointY - 15, 10, 10);
+        batcher.draw(noStar, 49, midPointY - 15, 10, 10);
+        batcher.draw(noStar, 61, midPointY - 15, 10, 10);
+        batcher.draw(noStar, 73, midPointY - 15, 10, 10);
+
+        if (myWorld.getScore() > 2) {
+            batcher.draw(star, 73, midPointY - 15, 10, 10);
+        }
+
+        if (myWorld.getScore() > 17) {
+            batcher.draw(star, 61, midPointY - 15, 10, 10);
+        }
+
+        if (myWorld.getScore() > 50) {
+            batcher.draw(star, 49, midPointY - 15, 10, 10);
+        }
+
+        if (myWorld.getScore() > 80) {
+            batcher.draw(star, 37, midPointY - 15, 10, 10);
+        }
+
+        if (myWorld.getScore() > 120) {
+            batcher.draw(star, 25, midPointY - 15, 10, 10);
+        }
+
+        int length = ("" + myWorld.getScore()).length();
+
+        AssetLoader.whiteFont.draw(batcher, "" + myWorld.getScore(),
+                104 - (2 * length), midPointY - 20);
+
+        int length2 = ("" + AssetLoader.getHighScore()).length();
+        AssetLoader.whiteFont.draw(batcher, "" + AssetLoader.getHighScore(),
+                104 - (2.5f * length2), midPointY - 3);
+
+    }
+
+    private void drawRetry() {
+        batcher.draw(retry, 36, midPointY + 10, 66, 14);
+    }
+
+    private void drawReady() {
+        batcher.draw(ready, 36, midPointY - 50, 68, 14);
+    }
+
+    private void drawGameOver() {
+        batcher.draw(gameOver, 24, midPointY - 50, 92, 14);
     }
 
     private void drawScore() {
         int length = ("" + myWorld.getScore()).length();
         AssetLoader.shadow.draw(batcher, "" + myWorld.getScore(),
-        68 - (3 * length), midPointY - 82);
+                68 - (3 * length), midPointY - 82);
         AssetLoader.font.draw(batcher, "" + myWorld.getScore(),
-        68 - (3 *length), midPointY - 83);
+                68 - (3 * length), midPointY - 83);
+    }
+
+    private void drawHighScore() {
+        batcher.draw(highScore, 22, midPointY - 50, 96, 14);
     }
 
     public void render(float delta, float runTime) {
@@ -193,7 +248,7 @@ public class GameRenderer {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.begin(ShapeType.Filled);
 
         // Draw Background color
         shapeRenderer.setColor(55 / 255.0f, 80 / 255.0f, 100 / 255.0f, 1);
@@ -211,16 +266,12 @@ public class GameRenderer {
 
         batcher.begin();
         batcher.disableBlending();
+
         batcher.draw(bg, 0, midPointY + 23, 136, 43);
 
-        // 1. Draw Grass
-        drawGrass();
-
-        // 2. Draw Pipes
         drawPipes();
-        batcher.enableBlending();
 
-        // 3. Draw Skulls (requires transparency)
+        batcher.enableBlending();
         drawSkulls();
 
         if (myWorld.isRunning()) {
@@ -228,20 +279,36 @@ public class GameRenderer {
             drawScore();
         } else if (myWorld.isReady()) {
             drawDeeg(runTime);
-            drawScore();
+            drawReady();
         } else if (myWorld.isMenu()) {
-            drawBirdCentered(runTime);
+            drawDeegCentered(runTime);
             drawMenuUI();
         } else if (myWorld.isGameOver()) {
+            drawScoreboard();
             drawDeeg(runTime);
-            drawScore();
+            drawGameOver();
+            drawRetry();
         } else if (myWorld.isHighScore()) {
+            drawScoreboard();
             drawDeeg(runTime);
-            drawScore();
+            drawHighScore();
+            drawRetry();
         }
+
+        drawGrass();
+
         batcher.end();
         drawTransition(delta);
 
+    }
+
+    public void prepareTransition(int r, int g, int b, float duration) {
+        transitionColor.set(r / 255.0f, g / 255.0f, b / 255.0f, 1);
+        alpha.setValue(1);
+        Tween.registerAccessor(Value.class, new ValueAccessor());
+        manager = new TweenManager();
+        Tween.to(alpha, -1, duration).target(0)
+                .ease(TweenEquations.easeOutQuad).start(manager);
     }
 
     private void drawTransition(float delta) {
@@ -250,10 +317,13 @@ public class GameRenderer {
             Gdx.gl.glEnable(GL20.GL_BLEND);
             Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
             shapeRenderer.begin(ShapeType.Filled);
-            shapeRenderer.setColor(1, 1, 1, alpha.getValue());
+            shapeRenderer.setColor(transitionColor.r, transitionColor.g,
+                    transitionColor.b, alpha.getValue());
             shapeRenderer.rect(0, 0, 136, 300);
             shapeRenderer.end();
             Gdx.gl.glDisable(GL20.GL_BLEND);
+
         }
     }
+
 }

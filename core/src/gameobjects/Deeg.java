@@ -43,7 +43,7 @@ public class Deeg {
 
         //CEILING CHECK
         if (position.y < -13) {
-            position.y=-13;
+            position.y = -13;
             velocity.y = 0;
         }
 
@@ -74,14 +74,16 @@ public class Deeg {
     }
 
     public void updateReady(float runTime) {
-        position.y = 2 * (float) Math.sin(7*runTime) + originalY;
+        position.y = 2 * (float) Math.sin(7 * runTime) + originalY;
     }
 
     public boolean isFalling() {
+
         return velocity.y > 110;
     }
 
     public boolean shouldntFlap() {
+
         return velocity.y > 70 || !isAlive;
     }
 
@@ -98,7 +100,7 @@ public class Deeg {
     }
 
     public void decelerate() {
-        // We want the bird to stop accelerating downards once it is dead
+        // We want the deeg to stop accelerating downards once it is dead
         acceleration.y = 0;
     }
 

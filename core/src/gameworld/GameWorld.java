@@ -19,6 +19,7 @@ public class GameWorld {
     private int score = 0;
     private float runTime = 0;
     private int midPointY;
+    private GameRenderer renderer;
 
     private GameState currentState;
 
@@ -64,17 +65,26 @@ public class GameWorld {
         deeg.update(delta);
         scroller.update(delta);
 
-        //If Deeg bird collides with Pipe, stop the game
+        //If Deeg deeg collides with Pipe, stop the game
         if (scroller.collides(deeg) && deeg.isAlive()) {
             scroller.stop();
             deeg.die();
             AssetLoader.dead.play();
+            renderer.prepareTransition(255, 255, 255, .3f);
+
+            AssetLoader.fall.play();
         }
 
-        //If Deeg bird hits ground, stop the game
+        //If Deeg deeg hits ground, stop the game
         if (Intersector.overlaps(deeg.getBoundingCircle(), ground)) {
+
+            if(deeg.isAlive()) {
+                AssetLoader.dead.play();
+                renderer.prepareTransition(255,255,255,.3f);
+
+                deeg.die();
+            }
             scroller.stop();
-            deeg.die();
             deeg.decelerate();
             currentState = GameState.GAMEOVER;
 
@@ -113,14 +123,14 @@ public class GameWorld {
 
     public void ready() {
         currentState = GameState.READY;
+        renderer.prepareTransition(0,0,0,1f);
     }
 
     public void restart() {
-        currentState = GameState.READY;
         score = 0;
         deeg.onRestart(midPointY - 5);
         scroller.onRestart();
-        currentState = GameState.READY;
+        ready();
     }
 
     public boolean isReady() {
@@ -141,6 +151,10 @@ public class GameWorld {
 
     public boolean isRunning() {
         return currentState == GameState.RUNNING;
+    }
+
+    public void setRenderer(GameRenderer renderer) {
+        this.renderer = renderer;
     }
 
 }

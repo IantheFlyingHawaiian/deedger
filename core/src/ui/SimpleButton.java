@@ -4,9 +4,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 
-/**
- * Created by Ian on 3/14/2016.
- */
+import dghelpers.AssetLoader;
+
+
 public class SimpleButton {
 
     private float x, y, width, height;
@@ -28,6 +28,7 @@ public class SimpleButton {
         this.buttonDown = buttonDown;
 
         bounds = new Rectangle(x, y, width, height);
+
     }
 
     public boolean isClicked(int screenX, int screenY) {
@@ -43,23 +44,27 @@ public class SimpleButton {
     }
 
     public boolean isTouchDown(int screenX, int screenY) {
+
         if (bounds.contains(screenX, screenY)) {
             isPressed = true;
             return true;
         }
+
         return false;
     }
 
     public boolean isTouchUp(int screenX, int screenY) {
 
-        //It only counts as a touchUP if the button is in a pressed state.
-        if (bounds.contains(screenX,screenY) && isPressed){
+        // It only counts as a touchUp if the button is in a pressed state.
+        if (bounds.contains(screenX, screenY) && isPressed) {
             isPressed = false;
+            AssetLoader.flap.play();
             return true;
         }
 
-        // Whenever a finger is released, we will cancel any presses
+        // Whenever a finger is released, we will cancel any presses.
         isPressed = false;
         return false;
     }
+
 }
