@@ -7,12 +7,22 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 
+import java.util.List;
+
+import TweenAccessors.Value;
+import TweenAccessors.ValueAccessor;
+import aurelienribon.tweenengine.Tween;
+import aurelienribon.tweenengine.TweenEquations;
+import aurelienribon.tweenengine.TweenManager;
 import dghelpers.AssetLoader;
+import dghelpers.InputHandler;
 import gameobjects.Deeg;
 import gameobjects.Grass;
 import gameobjects.Pipe;
 import gameobjects.ScrollHandler;
+import ui.SimpleButton;
 
 /**
  * Created by Ian on 3/7/2016.
@@ -26,7 +36,6 @@ public class GameRenderer {
     private SpriteBatch batcher;
 
     private int midPointY;
-    private int gameHeight;
 
     // Game Objects
     private Deeg deeg;
@@ -35,16 +44,23 @@ public class GameRenderer {
     private Pipe pipe1, pipe2, pipe3;
 
     // Game Assets
-    private TextureRegion bg, grass;
+    private TextureRegion bg, grass, deegMid, skullUp, skullDown, bar;
     private Animation deegAnimation;
-    private TextureRegion deegMid, deegDown, deegUp;
-    private TextureRegion skullUp, skullDown, bar;
+
+    //Tween stuff
+    private TweenManager manager;
+    private Value alpha = new Value();
+
+    //Buttons
+    private List<SimpleButton> menuButtons;
+
 
     public GameRenderer(GameWorld world, int gameHeight, int midPointY) {
         myWorld = world;
 
-        this.gameHeight = gameHeight;
         this.midPointY = midPointY;
+        this.menuButtons = ((InputHandler) Gdx.input.getInputProcessor())
+                .getMenuButtons();
 
         cam = new OrthographicCamera();
         cam.setToOrtho(true, 136, gameHeight);
@@ -57,6 +73,14 @@ public class GameRenderer {
         // Call helper methods to initialize instance variables
         initGameObjects();
         initAssets();
+        setupTweens();
+    }
+
+    private void setupTweens() {
+        Tween.registerAccessor(Value.class, new ValueAccessor());
+        manager = new TweenManager();
+        Tween.to(alpha, -1, .5f).target(0).ease(TweenEquations.easeOutQuad)
+                .start(manager);
     }
 
     private void initGameObjects() {
@@ -74,8 +98,6 @@ public class GameRenderer {
         grass = AssetLoader.grass;
         deegAnimation = AssetLoader.deegAnimation;
         deegMid = AssetLoader.deeg;
-        deegDown = AssetLoader.deegDown;
-        deegUp = AssetLoader.deegUp;
         skullUp = AssetLoader.skullUp;
         skullDown = AssetLoader.skullDown;
         bar = AssetLoader.bar;
@@ -110,8 +132,7 @@ public class GameRenderer {
     }
 
     private void drawPipes() {
-        // Temporary code! Sorry about the mess :)
-        // We will fix this when we finish the Pipe class.
+
         batcher.draw(bar, pipe1.getX(), pipe1.getY(), pipe1.getWidth(),
                 pipe1.getHeight());
         batcher.draw(bar, pipe1.getX(), pipe1.getY() + pipe1.getHeight() + 45,
@@ -128,7 +149,46 @@ public class GameRenderer {
                 pipe3.getWidth(), midPointY + 66 - (pipe3.getHeight() + 45));
     }
 
-    public void render(float runTime) {
+    private void drawBirdCentered(float runTime) {
+        batcher.draw(deegAnimation.getKeyFrame(runTime), 59, deeg.getY()-15,
+                deeg.getWidth() / 2.0f, deeg.getHeight() / 2.0f,
+                deeg.getWidth(), deeg.getHeight(), 1, 1, deeg.getRotation());
+    }
+
+    private void drawDeeg(float runTime) {
+
+        if(deeg.shouldntFlap()) {
+            batcher.draw(deegMid, deeg.getX(), deeg.getY(),
+                    deeg.getWidth() / 2.0f, deeg.getHeight() / 2.0f,
+                    deeg.getWidth(), deeg.getHeight(), 1, 1, deeg.getRotation());
+
+        } else {
+            batcher.draw(deegAnimation.getKeyFrame(runTime), deeg.getX(),
+                    deeg.getY(), deeg.getWidth() / 2.0f,
+                    deeg.getHeight() / 2.0f, deeg.getWidth(),
+                    deeg.getHeight(), 1, 1, deeg.getRotation());
+        }
+    }
+
+    private void drawMenuUI() {
+        batcher.draw(AssetLoader.dgLogo, 136/2 - 56, midPointY - 50,
+                AssetLoader.dgLogo.getRegionWidth() / 1.2f,
+                AssetLoader.dgLogo.getRegionHeight() / 1.2f);
+
+        for (SimpleButton button: menuButtons) {
+            button.draw(batcher);
+        }
+    }
+
+    private void drawScore() {
+        int length = ("" + myWorld.getScore()).length();
+        AssetLoader.shadow.draw(batcher, "" + myWorld.getScore(),
+        68 - (3 * length), midPointY - 82);
+        AssetLoader.font.draw(batcher, "" + myWorld.getScore(),
+        68 - (3 *length), midPointY - 83);
+    }
+
+    public void render(float delta, float runTime) {
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -163,80 +223,37 @@ public class GameRenderer {
         // 3. Draw Skulls (requires transparency)
         drawSkulls();
 
-        if (deeg.shouldntFlap()) {
-            batcher.draw(deegMid, deeg.getX(), deeg.getY(),
-                    deeg.getWidth() / 2.0f, deeg.getHeight() / 2.0f,
-                    deeg.getWidth(), deeg.getHeight(), 1, 1, deeg.getRotation());
-
-        } else {
-            batcher.draw(deegAnimation.getKeyFrame(runTime), deeg.getX(),
-                    deeg.getY(), deeg.getWidth() / 2.0f,
-                    deeg.getHeight() / 2.0f, deeg.getWidth(), deeg.getHeight(),
-                    1, 1, deeg.getRotation());
+        if (myWorld.isRunning()) {
+            drawDeeg(runTime);
+            drawScore();
+        } else if (myWorld.isReady()) {
+            drawDeeg(runTime);
+            drawScore();
+        } else if (myWorld.isMenu()) {
+            drawBirdCentered(runTime);
+            drawMenuUI();
+        } else if (myWorld.isGameOver()) {
+            drawDeeg(runTime);
+            drawScore();
+        } else if (myWorld.isHighScore()) {
+            drawDeeg(runTime);
+            drawScore();
         }
-
-
-        // TEMPORARY CODE! We will fix this section later:
-
-        if (myWorld.isReady()) {
-            // Draw shadow first
-            AssetLoader.shadow.draw(batcher, "Touch me", (136 / 2)
-                    - (42), 76);
-            // Draw text
-            AssetLoader.font.draw(batcher, "Touch me", (136 / 2)
-                    - (42 - 1), 75);
-        } else {
-
-
-            if (myWorld.isGameOver() || myWorld.isHighScore()) {
-
-                if (myWorld.isGameOver()) {
-                    AssetLoader.shadow.draw(batcher, "Game Over", 25, 56);
-                    AssetLoader.font.draw(batcher, "Game Over", 24, 55);
-
-                    AssetLoader.shadow.draw(batcher, "High Score:", 23, 106);
-                    AssetLoader.font.draw(batcher, "High Score:", 22, 105);
-
-                    String highScore = AssetLoader.getHighScore() + "";
-
-                    // Draw shadow first
-                    AssetLoader.shadow.draw(batcher, highScore, (136 / 2)
-                            - (3 * highScore.length()), 128);
-                    // Draw text
-                    AssetLoader.font.draw(batcher, highScore, (136 / 2)
-                            - (3 * highScore.length() - 1), 127);
-                } else {
-                    AssetLoader.shadow.draw(batcher, "High Score!", 19, 56);
-                    AssetLoader.font.draw(batcher, "High Score!", 18, 55);
-                }
-
-                AssetLoader.shadow.draw(batcher, "Try again?", 23, 76);
-                AssetLoader.font.draw(batcher, "Try again?", 24, 75);
-
-                // Convert integer into String
-                String score = myWorld.getScore() + "";
-
-                // Draw shadow first
-                AssetLoader.shadow.draw(batcher, score,
-                        (136 / 2) - (3 * score.length()), 12);
-                // Draw text
-                AssetLoader.font.draw(batcher, score,
-                        (136 / 2) - (3 * score.length() - 1), 11);
-
-            }
-
-            // Convert integer into String
-            String score = myWorld.getScore() + "";
-
-            // Draw shadow first
-            AssetLoader.shadow.draw(batcher, "" + myWorld.getScore(), (136 / 2)
-                    - (3 * score.length()), 12);
-            // Draw text
-            AssetLoader.font.draw(batcher, "" + myWorld.getScore(), (136 / 2)
-                    - (3 * score.length() - 1), 11);
-        }
-
         batcher.end();
+        drawTransition(delta);
 
+    }
+
+    private void drawTransition(float delta) {
+        if (alpha.getValue() > 0) {
+            manager.update(delta);
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            shapeRenderer.begin(ShapeType.Filled);
+            shapeRenderer.setColor(1, 1, 1, alpha.getValue());
+            shapeRenderer.rect(0, 0, 136, 300);
+            shapeRenderer.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+        }
     }
 }

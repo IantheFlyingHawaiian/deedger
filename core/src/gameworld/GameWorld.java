@@ -1,9 +1,5 @@
 package gameworld;
 
-/**
- * Created by Ian on 3/7/2016.
- */
-
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 
@@ -11,48 +7,53 @@ import dghelpers.AssetLoader;
 import gameobjects.Deeg;
 import gameobjects.ScrollHandler;
 
+/**
+ * Created by Ian on 3/7/2016.
+ */
+
 public class GameWorld {
 
     private Deeg deeg;
     private ScrollHandler scroller;
     private Rectangle ground;
     private int score = 0;
-
+    private float runTime = 0;
     private int midPointY;
 
     private GameState currentState;
 
     public enum GameState {
-        READY, RUNNING, GAMEOVER, HIGHSCORE
+        MENU, READY, RUNNING, GAMEOVER, HIGHSCORE
     }
 
     public GameWorld(int midPointY) {
-        currentState = GameState.READY;
+        currentState = GameState.MENU;
         this.midPointY = midPointY;
         deeg = new Deeg(33, midPointY - 5, 17, 12);
-        // The grass should start 66 pixels below the midPointY
+        //The grass should start at 66 pixels below the midPoint Y
         scroller = new ScrollHandler(this, midPointY + 66);
         ground = new Rectangle(0, midPointY + 66, 137, 11);
     }
 
     public void update(float delta) {
+        runTime += delta;
 
         switch (currentState) {
             case READY:
+            case MENU:
                 updateReady(delta);
                 break;
-
             case RUNNING:
                 updateRunning(delta);
                 break;
             default:
                 break;
         }
-
     }
 
-    private void updateReady(float delta) {
-        // Do nothing for now
+    public void updateReady(float delta) {
+        deeg.updateReady(runTime);
+        scroller.updateReady(delta);
     }
 
     public void updateRunning(float delta) {
@@ -63,28 +64,35 @@ public class GameWorld {
         deeg.update(delta);
         scroller.update(delta);
 
+        //If Deeg bird collides with Pipe, stop the game
         if (scroller.collides(deeg) && deeg.isAlive()) {
             scroller.stop();
             deeg.die();
             AssetLoader.dead.play();
         }
 
+        //If Deeg bird hits ground, stop the game
         if (Intersector.overlaps(deeg.getBoundingCircle(), ground)) {
             scroller.stop();
             deeg.die();
             deeg.decelerate();
+            currentState = GameState.GAMEOVER;
 
-            if(score > AssetLoader.getHighScore()) {
+            //If the CurrrentScore is > Highscore,
+            //set gameState to HIGHSCORE
+            if (score > AssetLoader.getHighScore()){
                 AssetLoader.setHighScore(score);
                 currentState = GameState.HIGHSCORE;
             }
-            currentState = GameState.GAMEOVER;
         }
     }
 
     public Deeg getDeeg() {
         return deeg;
+    }
 
+    public int getMidPointY() {
+        return midPointY;
     }
 
     public ScrollHandler getScroller() {
@@ -96,15 +104,15 @@ public class GameWorld {
     }
 
     public void addScore(int increment) {
-        score += increment;
-    }
-
-    public boolean isReady() {
-        return currentState == GameState.READY;
+        score+= increment;
     }
 
     public void start() {
         currentState = GameState.RUNNING;
+    }
+
+    public void ready() {
+        currentState = GameState.READY;
     }
 
     public void restart() {
@@ -115,6 +123,10 @@ public class GameWorld {
         currentState = GameState.READY;
     }
 
+    public boolean isReady() {
+        return currentState == GameState.READY;
+    }
+
     public boolean isGameOver() {
         return currentState == GameState.GAMEOVER;
     }
@@ -122,4 +134,13 @@ public class GameWorld {
     public boolean isHighScore() {
         return currentState == GameState.HIGHSCORE;
     }
+
+    public boolean isMenu() {
+        return currentState == GameState.MENU;
+    }
+
+    public boolean isRunning() {
+        return currentState == GameState.RUNNING;
+    }
+
 }
