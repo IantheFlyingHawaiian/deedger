@@ -240,6 +240,7 @@ public class GameRenderer {
     }
 
     private void drawHighScore() {
+
         batcher.draw(highScore, 22, midPointY - 50, 96, 14);
     }
 
