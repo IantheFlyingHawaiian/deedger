@@ -1,4 +1,4 @@
-package com.tomf.myfirstsgame;
+package gameLoader;
 
 import android.os.Bundle;
 
